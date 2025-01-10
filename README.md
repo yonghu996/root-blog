@@ -1,3 +1,4 @@
+# gcp-root.sh
 gcp的一键修改的脚本
 $ bash root.sh
 请输入 SSH 端口号（默认 36275）： 自定义
