@@ -1,22 +1,64 @@
 #!/bin/bash
 
-# 提示用户输入 SSH 端口号
-read -p "请输入 SSH 端口号（默认 36275）： " SSH_PORT
-SSH_PORT=${SSH_PORT:-36275}  # 如果用户未输入，则使用默认值 36275
+# 设置随机端口范围
+RANDOM_PORT_MIN=10101
+RANDOM_PORT_MAX=62120
 
-# 检查端口号是否合法
-if ! [[ "$SSH_PORT" =~ ^[0-9]+$ ]] || [ "$SSH_PORT" -lt 1 ] || [ "$SSH_PORT" -gt 65535 ]; then
-  echo "错误：端口号必须是 1-65535 之间的数字。"
-  exit 1
-fi
+# 设置用户自定义端口范围
+USER_PORT_MIN=1000
+USER_PORT_MAX=65000
+
+# 函数：检查端口是否被占用
+check_port_occupied() {
+  local port=$1
+  # 使用 ss 命令检查端口是否处于监听状态
+  if ss -tuln | grep -q ":$port "; then
+    return 0 # 端口被占用，返回 0
+  else
+    return 1 # 端口未被占用，返回 1
+  fi
+}
+
+# 生成随机端口号
+generate_random_port() {
+  local range=$((RANDOM_PORT_MAX - RANDOM_PORT_MIN + 1))
+  echo $((RANDOM % range + RANDOM_PORT_MIN))
+}
+
+# 获取默认随机端口
+DEFAULT_SSH_PORT=$(generate_random_port)
+
+# 循环直到获取到有效的且未被占用的 SSH 端口号
+while true; do
+  # 提示用户输入 SSH 端口号，使用默认随机端口
+  read -p "请输入 SSH 端口号（默认 $DEFAULT_SSH_PORT）： " SSH_PORT
+  SSH_PORT=${SSH_PORT:-$DEFAULT_SSH_PORT}  # 如果用户未输入，则使用默认随机值
+
+  # 检查端口号是否是数字
+  if ! [[ "$SSH_PORT" =~ ^[0-9]+$ ]]; then
+    echo "错误：端口号必须是数字。"
+    continue # 继续下一次循环
+  fi
+
+  # 检查端口号是否在允许的范围内
+  if [[ "$SSH_PORT" -ge "$USER_PORT_MIN" ]] && [[ "$SSH_PORT" -le "$USER_PORT_MAX" ]]; then
+    # 检查端口是否被占用
+    if check_port_occupied "$SSH_PORT"; then
+      echo "错误：端口 $SSH_PORT 已被占用，请更换其他端口。"
+    else
+      break # 端口有效且未被占用，退出循环
+    fi
+  else
+    echo "错误：端口号必须在 $USER_PORT_MIN 到 $USER_PORT_MAX 之间。"
+  fi
+done
 
 # 备份原始配置文件
 sudo cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
 
 # 修改 SSH 配置文件
 sudo tee /etc/ssh/sshd_config > /dev/null <<EOF
-# This is the sshd server system-wide configuration file.  See
-# sshd_config(5) for more information.
+# 这是 sshd 服务器的全局配置文件。 更多信息请查看 sshd_config(5)。
 
 Include /etc/ssh/sshd_config.d/*.conf
 
