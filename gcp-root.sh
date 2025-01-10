@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # 提示用户输入 SSH 端口号
-read -p "请输入 SSH 端口号（默认 31275）： " SSH_PORT
-SSH_PORT=${SSH_PORT:-36275}  # 如果用户未输入，则使用默认值 31275
+read -p "请输入 SSH 端口号（默认 36275）： " SSH_PORT
+SSH_PORT=${SSH_PORT:-36275}  # 如果用户未输入，则使用默认值 36275
 
 # 检查端口号是否合法
 if ! [[ "$SSH_PORT" =~ ^[0-9]+$ ]] || [ "$SSH_PORT" -lt 1 ] || [ "$SSH_PORT" -gt 65535 ]; then
@@ -11,10 +11,15 @@ if ! [[ "$SSH_PORT" =~ ^[0-9]+$ ]] || [ "$SSH_PORT" -lt 1 ] || [ "$SSH_PORT" -gt
 fi
 
 # 备份原始配置文件
-cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
+#cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
 
 # 修改 SSH 配置文件
 cat > /etc/ssh/sshd_config <<EOF
+# This is the sshd server system-wide configuration file.  See
+# sshd_config(5) for more information.
+
+Include /etc/ssh/sshd_config.d/*.conf
+
 Port $SSH_PORT
 PermitRootLogin no
 PubkeyAuthentication yes
