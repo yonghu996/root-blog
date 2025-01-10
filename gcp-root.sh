@@ -11,10 +11,10 @@ if ! [[ "$SSH_PORT" =~ ^[0-9]+$ ]] || [ "$SSH_PORT" -lt 1 ] || [ "$SSH_PORT" -gt
 fi
 
 # 备份原始配置文件
-#cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
+sudo cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
 
 # 修改 SSH 配置文件
-cat > /etc/ssh/sshd_config <<EOF
+sudo tee /etc/ssh/sshd_config > /dev/null <<EOF
 # This is the sshd server system-wide configuration file.  See
 # sshd_config(5) for more information.
 
@@ -33,7 +33,7 @@ Subsystem sftp /usr/lib/openssh/sftp-server
 EOF
 
 # 重启 SSH 服务
-systemctl restart sshd
+sudo systemctl restart sshd
 
 # 输出结果
 echo "SSH 配置已更新："
